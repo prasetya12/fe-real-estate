@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/hooks/use-toast"
+import { useMutation } from "@tanstack/react-query"
+import { registerUser } from "@/api/auth.service"
 
 export default function RegisterPage() {
   const [name, setName] = useState("")
@@ -21,6 +23,18 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+
+
+  const {mutate,isPending} = useMutation({ mutationFn: registerUser,
+    onSuccess:()=>{
+      toast({
+        title: "Success",
+        description: "Register Success",
+        variant: "default",
+      })
+      router.push('/')
+  }})
+
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,16 +51,9 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      // In a real app, you would call your registration API here
-      // For demo purposes, we'll simulate a successful registration
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+     
+      mutate({name,email,password})
 
-      toast({
-        title: "Registration successful",
-        description: "Your account has been created.",
-      })
-
-      router.push("/dashboard")
     } catch (error) {
       toast({
         title: "Registration failed",
@@ -133,8 +140,8 @@ export default function RegisterPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col">
-            <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Register"}
+            <Button className="w-full" type="submit" disabled={isPending}>
+              {isPending ? "Creating account..." : "Register"}
             </Button>
             <div className="mt-4 text-center text-sm">
               Already have an account?{" "}
