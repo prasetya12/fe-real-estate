@@ -4,8 +4,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { MapPin, BedDouble, Bath, SquareIcon as SquareFoot, Plus } from "lucide-react"
 import { properties } from "@/lib/data"
+import { getTokenFromCookie } from "@/lib/auth"
+import { redirect } from 'next/navigation';
+export default async function PropertiesPage() {
 
-export default function PropertiesPage() {
+  const token = await getTokenFromCookie();
+  console.log(token,'a')
+  if (!token) {
+    redirect('/')
+  }
   return (
     <DashboardLayout>
       <div className="container py-8">

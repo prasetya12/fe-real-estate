@@ -11,13 +11,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/hooks/use-toast"
+import { useLogin } from "@/hooks/useLogin"
 
 export default function LoginPage() {
+  const { mutateAsync, isPending } = useLogin();
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
   const { toast } = useToast()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -25,16 +27,11 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // In a real app, you would call your authentication API here
-      // For demo purposes, we'll simulate a successful login
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      mutateAsync({email,password})
+      console.log('a')
+      
 
-      toast({
-        title: "Login successful",
-        description: "Welcome back to RealEstate!",
-      })
-
-      router.push("/dashboard")
+      // router.push("/dashboard")
     } catch (error) {
       toast({
         title: "Login failed",
@@ -106,8 +103,8 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col">
-            <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+            <Button className="w-full" type="submit" disabled={isPending}>
+              {isPending ? "Logging in..." : "Login"}
             </Button>
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
