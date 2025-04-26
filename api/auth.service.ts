@@ -23,7 +23,6 @@ export const loginUser = async({email,password}:{email:string,password:string})=
             password: password,
         });
 
-        console.log(response.data.data.access_token,'a')
         return response.data.data.access_token;
     } catch (error: any) {
         throw new Error(error.response?.data?.message || "Login failed");

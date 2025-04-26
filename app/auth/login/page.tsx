@@ -28,8 +28,6 @@ export default function LoginPage() {
 
     try {
       mutateAsync({email,password})
-      console.log('a')
-      
 
       // router.push("/dashboard")
     } catch (error) {

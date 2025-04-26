@@ -8,10 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, BedDouble, Bath, SquareIcon as SquareFoot } from "lucide-react"
-import { properties } from "@/lib/data"
+// import { properties } from "@/lib/data"
 import { useMobile } from "@/components/hooks/use-mobile"
 import { useToast } from "@/components/hooks/use-toast"
 import { useRouter } from "next/navigation";
+import { useGetProperty } from "@/hooks/property/useGetProperty"
+import { IProperty } from "@/domain/interface/property"
 
 export default function MapPage() {  
 
@@ -24,23 +26,24 @@ export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null)
   const isMobile = useMobile()
   const { toast } = useToast()
+  const [leafletReady, setLeafletReady] = useState(false)
+
+
+  const {data:properties} = useGetProperty()
+
 
   // Initialize Leaflet map
   const initializeMap = useCallback(() => {
-    if (!mapRef.current || !window.L) return
+    if (!mapRef.current || !window.L || !properties) return
 
     const mapElement = mapRef.current as HTMLElement & { _leaflet_id?: number }
 
-    // Check if map is already initialized
     if (mapElement._leaflet_id) {
-      console.log("Map already initialized.")
       return
     }
 
-    // Create map instance
     const mapInstance = window.L.map(mapRef.current).setView([30.2672, -97.7431], 12)
 
-    // Add OpenStreetMap tile layer (free)
     window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
@@ -49,7 +52,6 @@ export default function MapPage() {
     setMap(mapInstance)
     setMapLoaded(true)
 
-    // Create custom icon for markers
     const createCustomIcon = (price: string) => {
       return window.L.divIcon({
         className: "custom-marker",
@@ -59,40 +61,35 @@ export default function MapPage() {
       })
     }
 
-    // Add markers for properties
-    const mapMarkers = properties.map((property) => {
-      // Format price for display
+    const mapMarkers = properties.map((property:IProperty) => {
       const priceDisplay = `$${Math.round(property.price / 1000)}K`
 
-      // Create marker with custom icon
       const marker = window.L.marker([property.latitude, property.longitude], {
         icon: createCustomIcon(priceDisplay),
       }).addTo(mapInstance)
 
-      // Create popup content
       const popupContent = document.createElement("div")
       popupContent.className = "property-popup"
       popupContent.innerHTML = `
         <div class="w-64">
-          <img src="${property.images[0] || "/placeholder.svg"}" alt="${
+          <img src="${property.property_images && property.property_images.length>0?property.property_images[0].url : "/placeholder.svg"}" alt="${
             property.title
           }" class="w-full h-32 object-cover rounded-t-md">
           <div class="p-2 bg-white rounded-b-md">
             <h3 class="font-semibold text-sm">${property.title}</h3>
-            <p class="text-xs text-gray-500">${property.address}, ${property.city}</p>
+            <p class="text-xs text-gray-500">${property.address}}</p>
             <p class="font-bold text-primary">$${property.price.toLocaleString()}</p>
             <div class="flex items-center gap-2 text-xs text-gray-500 mt-1">
               <span>${property.bedrooms} bd</span>
               <span>•</span>
               <span>${property.bathrooms} ba</span>
               <span>•</span>
-              <span>${property.squareFeet.toLocaleString()} sqft</span>
+              <span>${property.square_feet.toLocaleString()} sqft</span>
             </div>
           </div>
         </div>
       `
 
-      // Create popup
       const popup = window.L.popup({
         closeButton: true,
         className: "property-popup",
@@ -100,8 +97,6 @@ export default function MapPage() {
         minWidth: 260,
       }).setContent(popupContent)
 
-      // Add click event
-      // Add hover events
       marker.bindPopup(popup)
       marker.on("mouseover", () => {
         marker.openPopup()
@@ -117,8 +112,7 @@ export default function MapPage() {
 
     setMarkers(mapMarkers)
 
-    // Fit map to bounds of all properties
-    const bounds = window.L.latLngBounds(properties.map((p) => [p.latitude, p.longitude]))
+    const bounds = window.L.latLngBounds(properties.map((p:IProperty) => [p.latitude, p.longitude]))
     mapInstance.fitBounds(bounds, { padding: [50, 50] })
 
     return () => {
@@ -128,24 +122,55 @@ export default function MapPage() {
       // Clean up
       mapInstance.remove()
     }
-  }, [])
+  }, [properties])
 
   // Load Leaflet scripts
+  // useEffect(() => {
+  //   if (typeof window !== "undefined" && !window.L || !properties) {
+  //     const linkElement = document.createElement("link")
+  //     linkElement.rel = "stylesheet"
+  //     linkElement.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  //     linkElement.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  //     linkElement.crossOrigin = ""
+  //     document.head.appendChild(linkElement)
+
+  //     const scriptElement = document.createElement("script")
+  //     scriptElement.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  //     scriptElement.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  //     scriptElement.crossOrigin = ""
+  //     scriptElement.onload = () => {
+  //       initializeMap()
+  //     }
+  //     scriptElement.onerror = () => {
+  //       toast({
+  //         title: "Error loading map",
+  //         description: "Please check your internet connection and try again.",
+  //         variant: "destructive",
+  //       })
+  //     }
+  //     document.head.appendChild(scriptElement)
+
+  //     return () => {
+  //       // Clean up
+  //       document.head.removeChild(linkElement)
+  //       document.head.removeChild(scriptElement)
+  //     }
+  //   } else if (window.L) {
+  //     initializeMap()
+  //   }
+  // }, [initializeMap, toast,properties])
+
   useEffect(() => {
     if (typeof window !== "undefined" && !window.L) {
       const linkElement = document.createElement("link")
       linkElement.rel = "stylesheet"
       linkElement.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      linkElement.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      linkElement.crossOrigin = ""
       document.head.appendChild(linkElement)
 
       const scriptElement = document.createElement("script")
       scriptElement.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      scriptElement.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      scriptElement.crossOrigin = ""
       scriptElement.onload = () => {
-        initializeMap()
+        setLeafletReady(true)
       }
       scriptElement.onerror = () => {
         toast({
@@ -157,14 +182,19 @@ export default function MapPage() {
       document.head.appendChild(scriptElement)
 
       return () => {
-        // Clean up
         document.head.removeChild(linkElement)
         document.head.removeChild(scriptElement)
       }
     } else if (window.L) {
+      setLeafletReady(true)
+    }
+  }, [toast])
+
+  useEffect(() => {
+    if (leafletReady && properties) {
       initializeMap()
     }
-  }, [initializeMap, toast])
+  }, [leafletReady, properties, initializeMap])
 
   // Handle search input
   const handleSearchInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,7 +232,7 @@ export default function MapPage() {
     if (!map || !markers.length) return
 
     if (selectedProperty) {
-      const property = properties.find((p) => p.id === selectedProperty)
+      const property = properties.find((p:IProperty) => p.id === selectedProperty)
       if (!property) return
 
       const markerObj = markers.find((m) => m.propertyId === selectedProperty)
@@ -249,7 +279,7 @@ export default function MapPage() {
             </div>
           </div>
           <div className="divide-y">
-            {properties.map((property) => (
+            {properties&&properties.map((property:IProperty) => (
               <div
                 key={property.id}
                 className={`p-4 cursor-pointer transition-colors hover:bg-muted ${
@@ -260,7 +290,7 @@ export default function MapPage() {
                 <div className="flex gap-4">
                   <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md">
                     <img
-                      src={property.images[0] || "/placeholder.svg"}
+                      src={property.property_images && property.property_images.length>0?property.property_images[0].url : "/placeholder.svg"}
                       alt={property.title}
                       className="h-full w-full object-cover"
                     />
@@ -268,7 +298,7 @@ export default function MapPage() {
                   <div className="flex-1">
                     <h3 className="font-medium line-clamp-1">{property.title}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-1">
-                      {property.address}, {property.city}
+                      {property.address}
                     </p>
                     <p className="font-bold text-primary">${property.price.toLocaleString()}</p>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
@@ -282,7 +312,7 @@ export default function MapPage() {
                       </div>
                       <div className="flex items-center gap-1">
                         <SquareFoot className="h-3 w-3" />
-                        <span>{property.squareFeet.toLocaleString()}</span>
+                        <span>{property.square_feet.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -310,33 +340,35 @@ export default function MapPage() {
             <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80">
               <Card className="bg-white shadow-lg">
                 <CardHeader className="p-4">
-                  <CardTitle className="text-lg">{properties.find((p) => p.id === selectedProperty)?.title}</CardTitle>
-                  <CardDescription>{properties.find((p) => p.id === selectedProperty)?.address}</CardDescription>
+                  <CardTitle className="text-lg">{properties.find((p:IProperty) => p.id === selectedProperty)?.title}</CardTitle>
+                  <CardDescription>{properties.find((p:IProperty) => p.id === selectedProperty)?.address}</CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
                   <div className="aspect-video w-full overflow-hidden rounded-md">
                     <img
-                      src={properties.find((p) => p.id === selectedProperty)?.images[0] || "/placeholder.svg"}
-                      alt={properties.find((p) => p.id === selectedProperty)?.title}
+                      src={properties.find((p: IProperty) => p.id === selectedProperty)?.images?.length > 0
+                        ? properties.find((p: IProperty) => p.id === selectedProperty)?.images[0]
+                        : "/placeholder.svg"}
+                      alt={properties.find((p:IProperty) => p.id === selectedProperty)?.title}
                       className="h-full w-full object-cover"
                     />
                   </div>
                   <div className="mt-4 flex items-center justify-between">
                     <span className="font-bold text-lg text-primary">
-                      ${properties.find((p) => p.id === selectedProperty)?.price.toLocaleString()}
+                      ${properties.find((p:IProperty) => p.id === selectedProperty)?.price.toLocaleString()}
                     </span>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <BedDouble className="h-4 w-4" />
-                        <span>{properties.find((p) => p.id === selectedProperty)?.bedrooms}</span>
+                        <span>{properties.find((p:IProperty) => p.id === selectedProperty)?.bedrooms}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Bath className="h-4 w-4" />
-                        <span>{properties.find((p) => p.id === selectedProperty)?.bathrooms}</span>
+                        <span>{properties.find((p:IProperty) => p.id === selectedProperty)?.bathrooms}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <SquareFoot className="h-4 w-4" />
-                        <span>{properties.find((p) => p.id === selectedProperty)?.squareFeet.toLocaleString()}</span>
+                        <span>{properties.find((p:IProperty) => p.id === selectedProperty)?.square_feet.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>

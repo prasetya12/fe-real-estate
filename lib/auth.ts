@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 
+
 export const setTokenCookie = async (token: string) => {
     const cookieStore = await cookies()
     cookieStore.set('token', token, {
@@ -12,8 +13,12 @@ export const setTokenCookie = async (token: string) => {
     });
 };
 
-export const getTokenFromCookie =async  () => {
+export const getTokenFromCookie = async () => {
     const cookieStore = await cookies()
-
     return cookieStore.get('token')?.value || null;
 };
+
+export const removeCookie = async () => {
+    const cookieStore = await cookies();
+    cookieStore.delete('token');
+}
