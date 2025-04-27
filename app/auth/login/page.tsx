@@ -29,7 +29,6 @@ export default function LoginPage() {
     try {
       mutateAsync({email,password})
 
-      // router.push("/dashboard")
     } catch (error) {
       toast({
         title: "Login failed",

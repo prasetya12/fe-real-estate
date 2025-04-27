@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, BedDouble, Bath, SquareIcon as SquareFoot } from "lucide-react"
-// import { properties } from "@/lib/data"
 import { useMobile } from "@/components/hooks/use-mobile"
 import { useToast } from "@/components/hooks/use-toast"
 import { useRouter } from "next/navigation";
@@ -32,7 +31,6 @@ export default function MapPage() {
   const {data:properties} = useGetProperty()
 
 
-  // Initialize Leaflet map
   const initializeMap = useCallback(() => {
     if (!mapRef.current || !window.L || !properties) return
 
@@ -119,46 +117,10 @@ export default function MapPage() {
       if (mapInstance) {
         mapInstance.remove()
       }
-      // Clean up
       mapInstance.remove()
     }
   }, [properties])
 
-  // Load Leaflet scripts
-  // useEffect(() => {
-  //   if (typeof window !== "undefined" && !window.L || !properties) {
-  //     const linkElement = document.createElement("link")
-  //     linkElement.rel = "stylesheet"
-  //     linkElement.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  //     linkElement.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-  //     linkElement.crossOrigin = ""
-  //     document.head.appendChild(linkElement)
-
-  //     const scriptElement = document.createElement("script")
-  //     scriptElement.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  //     scriptElement.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-  //     scriptElement.crossOrigin = ""
-  //     scriptElement.onload = () => {
-  //       initializeMap()
-  //     }
-  //     scriptElement.onerror = () => {
-  //       toast({
-  //         title: "Error loading map",
-  //         description: "Please check your internet connection and try again.",
-  //         variant: "destructive",
-  //       })
-  //     }
-  //     document.head.appendChild(scriptElement)
-
-  //     return () => {
-  //       // Clean up
-  //       document.head.removeChild(linkElement)
-  //       document.head.removeChild(scriptElement)
-  //     }
-  //   } else if (window.L) {
-  //     initializeMap()
-  //   }
-  // }, [initializeMap, toast,properties])
 
   useEffect(() => {
     if (typeof window !== "undefined" && !window.L) {
@@ -207,7 +169,6 @@ export default function MapPage() {
     }
 
     try {
-      // Use Nominatim for geocoding (free OpenStreetMap service)
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
       )
@@ -218,7 +179,6 @@ export default function MapPage() {
     }
   }
 
-  // Handle search result selection
   const handleSearchResultSelect = (result: any) => {
     if (map) {
       map.setView([Number.parseFloat(result.lat), Number.parseFloat(result.lon)], 14)
@@ -227,7 +187,6 @@ export default function MapPage() {
     }
   }
 
-  // Update marker when property is selected from the list
   useEffect(() => {
     if (!map || !markers.length) return
 
@@ -238,10 +197,8 @@ export default function MapPage() {
       const markerObj = markers.find((m) => m.propertyId === selectedProperty)
       if (!markerObj) return
 
-      // Open popup for selected property
       markerObj.marker.openPopup()
 
-      // Center map on marker
       map.setView([property.latitude, property.longitude], 14)
     }
   }, [selectedProperty, map, markers])
@@ -322,7 +279,6 @@ export default function MapPage() {
           </div>
         </div>
 
-        {/* Map */}
         <div className={`relative w-full ${isMobile ? "h-1/2" : "h-full"} md:w-2/3 lg:w-3/4`}>
           <div ref={mapRef} className="h-full w-full map-container z-10">
             {!mapLoaded && (
@@ -335,7 +291,6 @@ export default function MapPage() {
             )}
           </div>
 
-          {/* Selected Property Details */}
           {selectedProperty && (
             <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80">
               <Card className="bg-white shadow-lg">
@@ -383,7 +338,6 @@ export default function MapPage() {
   )
 }
 
-// Add TypeScript declaration for Leaflet
 declare global {
   interface Window {
     L: any

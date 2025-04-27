@@ -1,5 +1,4 @@
 'use client'
-import { properties } from "@/lib/data"
 import { useGetProperty } from "@/hooks/property/useGetProperty"
 import CardProperty from "@/components/CardProperty"
 import { IProperty } from "@/domain/interface/property"

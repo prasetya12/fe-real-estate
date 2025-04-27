@@ -15,9 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/hooks/use-toast"
 import { useForm } from 'react-hook-form';
 import { Controller } from "react-hook-form"
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 import { useCreateProperty } from "@/hooks/property/useCreateProperty"
 import dynamic from "next/dynamic"
 
@@ -46,11 +44,9 @@ type FormValues = {
 };
 
 export default function CreatePropertyPage() {
-  const router = useRouter()
-  const { toast } = useToast()
   const [address, setAddress] = useState("")
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
-  const { mutate, isPending, isError, error } = useCreateProperty();
+  const { mutate, isPending } = useCreateProperty();
 
   const [tab, setTab] = useState("details");
   const [image, setImage] = useState<File | null>(null);
@@ -64,7 +60,7 @@ export default function CreatePropertyPage() {
   };
 
 
-  const { register, setValue, control,handleSubmit, watch, formState: { isSubmitting, errors } } = useForm({
+  const { control,handleSubmit, formState: {  errors } } = useForm({
     defaultValues: {
       title: '',
       description: '',
@@ -80,7 +76,6 @@ export default function CreatePropertyPage() {
     }
   });
 
-  // Handle address search with Nominatim (free OpenStreetMap geocoding)
   const handleAddressSearch = async (query: string) => {
     setAddress(query)
 
@@ -100,7 +95,6 @@ export default function CreatePropertyPage() {
     }
   }
 
-  // Handle address selection
   const handleAddressSelect = (result: any) => {
     setAddress(result.display_name)
     setCoordinates({
@@ -122,12 +116,11 @@ export default function CreatePropertyPage() {
     try{
       if (!image) {
         alert("Please upload an image.");
-        return; // Stop submission if image is not uploaded
+        return; 
       }
 
       const formData = new FormData();
 
-      // Append form fields to FormData
       formData.append("title", data.title);
       formData.append("image", image as Blob); 
       formData.append("price", data.price);
@@ -390,36 +383,7 @@ export default function CreatePropertyPage() {
                         />
                       </div>
                     </div>
-                    {/* <div className="grid gap-4 md:grid-cols-2">
-
-                      <div className="space-y-2">
-                        <Label htmlFor="latitude">Latitude</Label>
-                        <Input
-                          id="latitude"
-                          placeholder="e.g. 30.2672"
-                          value={coordinates.lat}
-                          onChange={(e) =>
-                            setCoordinates({ ...coordinates, lat: parseFloat(e.target.value) })
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="longitude">Longitude</Label>
-                        <Input
-                          id="longitude"
-                          placeholder="e.g. -97.7431"
-                          value={coordinates.lng}
-                          onChange={(e) =>
-                            setCoordinates({ ...coordinates, lng: parseFloat(e.target.value) })
-                          }
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="h-60 w-full rounded-md bg-muted flex items-center justify-center">
-                      <p className="text-muted-foreground">Map Preview (Click to set location)</p>
-                    </div> */}
+                 
                     <div>
                       <MapPreview
                         onCoordinatesChange={handleCoordinatesChange}
@@ -451,27 +415,25 @@ export default function CreatePropertyPage() {
 
 
 interface ImageUploadProps {
-  onImageUpload: (file: File | null) => void; // Callback to pass the file to the parent component
+  onImageUpload: (file: File | null) => void; 
 }
 function ImageUpload({ onImageUpload }: ImageUploadProps) {
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
 
-  // Handle file input change
   const handleFileChange = (e: any) => {
     const file = e.target.files[0];
     if (file) {
       setImage(file);
       setPreviewUrl(URL.createObjectURL(file));
-      onImageUpload(file);  // Pass the selected image to the parent component
+      onImageUpload(file);  
     }
   };
 
-  // Handle replacing the uploaded image
   const handleReplaceImage = () => {
     setImage(null);
     setPreviewUrl('');
-    onImageUpload(null);  // Pass null to parent when the image is removed
+    onImageUpload(null); 
   };
 
   return (
